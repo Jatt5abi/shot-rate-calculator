@@ -93,7 +93,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 
 .log-count{font-size:11px;color:var(--text-dim);margin-bottom:6px}
 .log-entry{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:13px;position:relative}
-.log-pull{font-family:'Oswald',sans-serif;color:var(--yellow);font-size:14px;font-weight:600}
+.log-load{font-family:'Oswald',sans-serif;color:var(--yellow);font-size:14px;font-weight:600}
 .log-data{color:var(--text-dim);margin-top:4px;line-height:1.6}
 .log-data span{color:var(--text);font-weight:500}
 .log-del{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:4px;opacity:.6;-webkit-tap-highlight-color:transparent}
@@ -131,7 +131,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 
  <div class="tabs">
  <button class="tab active" id="tabCalc" onclick="switchTab('calc')">Calculator</button>
- <button class="tab" id="tabPull" onclick="switchTab('pull')">Pull Tracker</button>
+ <button class="tab" id="tabPull" onclick="switchTab('load')">Load Tracker</button>
  <button class="tab" id="tabLogs" onclick="switchTab('logs')">Logs</button>
  </div>
 
@@ -203,8 +203,8 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 
  <!-- ═══ PULL TRACKER ═══ -->
  <div class="body hidden" id="viewPull">
- <div id="pullTotals"></div>
- <div class="section-label" id="pullLabel">Pull #1</div>
+ <div id="loadTotals"></div>
+ <div class="section-label" id="loadLabel">Load #1</div>
  <div class="grid-3">
  <div class="field">
  <label>Start Gal</label>
@@ -219,7 +219,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="pSqyds" inputmode="decimal" placeholder="From truck">
  </div>
  </div>
- <div id="pullResult"></div>
+ <div id="loadResult"></div>
  <div class="section-label">Job Info</div>
  <div class="grid">
  <div class="field">
@@ -249,8 +249,8 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  </div>
  </div>
  <div class="btn-row">
- <button class="btn btn-save" onclick="savePull()">Save Pull</button>
- <button class="btn btn-reset" onclick="clearPull()">Clear</button>
+ <button class="btn btn-save" onclick="saveLoad()">Save Load</button>
+ <button class="btn btn-reset" onclick="clearLoad()">Clear</button>
  </div>
  </div>
 
@@ -259,9 +259,9 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div id="logTotals"></div>
  <div class="btn-row">
  <button class="btn btn-export" onclick="exportCSV()">Export CSV</button>
- <button class="btn btn-danger hidden" id="btnClearAll" onclick="clearAllPulls()">Clear All</button>
+ <button class="btn btn-danger hidden" id="btnClearAll" onclick="clearAllLoads()">Clear All</button>
  </div>
- <div class="log-count" id="logCount">0 pulls logged</div>
+ <div class="log-count" id="logCount">0 loads logged</div>
  <div id="logList"></div>
  </div>
 
@@ -299,7 +299,7 @@ const corrGal = (g, temp, mat) => {
 
 // ─── STATE ───
 let calcTarget = "Rate";
-let pulls = JSON.parse(localStorage.getItem("src_pulls") || "[]");
+let loads = JSON.parse(localStorage.getItem("src_loads") || "[]");
 let ambientTemp = null;
 let locStr = "";
 
@@ -315,19 +315,19 @@ document.querySelectorAll("input:not([disabled])").forEach(inp => {
 
 // ─── TABS ───
 function switchTab(t) {
- ["Calc","Pull","Logs"].forEach(v => {
+ ["Calc","Load","Logs"].forEach(v => {
  $("view"+v).classList.toggle("hidden", v.toLowerCase() !== t);
  $("tab"+v).classList.toggle("active", v.toLowerCase() === t);
  });
  if (t === "logs") renderLogs();
- if (t === "pull") { syncJobInfo("to-pull"); updatePullUI(); }
+ if (t === "load") { syncJobInfo("to-load"); updateLoadUI(); }
  if (t === "calc") syncJobInfo("to-calc");
  updateLogTab();
 }
 
 // ─── SYNC JOB INFO between tabs ───
 function syncJobInfo(dir) {
- if (dir === "to-pull") {
+ if (dir === "to-load") {
  $("pTruck").value = $("truck").value;
  $("pMaterial").value = $("material").value;
  $("pSpray").value = $("sprayTemp").value;
@@ -404,7 +404,7 @@ function resetCalc() {
 }
 
 // ─── PULL TRACKER ───
-function getPullVals() {
+function getLoadVals() {
  const s = parseFloat($("pStart").value), e = parseFloat($("pEnd").value);
  const sy = parseFloat($("pSqyds").value);
  const net = (s && e) ? s - e : 0;
@@ -414,30 +414,30 @@ function getPullVals() {
  return { net, rate, tons, sy };
 }
 
-function updatePullUI() {
- $("pullLabel").textContent = "Pull #" + (pulls.length + 1);
- const { net, rate, tons } = getPullVals();
+function updateLoadUI() {
+ $("loadLabel").textContent = "Load #" + (loads.length + 1);
+ const { net, rate, tons } = getLoadVals();
 
  // Result card
  if (net > 0) {
- $("pullResult").innerHTML = `
+ $("loadResult").innerHTML = `
  <div class="result-card">
  <div class="result-item"><div class="rl">Net Gallons</div><div class="rv">${net.toFixed(0)}</div></div>
  <div class="result-item"><div class="rl">Avg Rate</div><div class="rv cy">${rate > 0 ? rate.toFixed(2) : "—"}</div><div class="ru">gal/sy</div></div>
  <div class="result-item"><div class="rl">Tons</div><div class="rv">${tons > 0 ? tons.toFixed(2) : "—"}</div></div>
- <div class="result-item"><div class="rl">Pull #</div><div class="rv cy">${pulls.length + 1}</div></div>
+ <div class="result-item"><div class="rl">Load #</div><div class="rv cy">${loads.length + 1}</div></div>
  </div>`;
  } else {
- $("pullResult").innerHTML = "";
+ $("loadResult").innerHTML = "";
  }
 
  // Totals
- if (pulls.length > 0) {
- const tg = pulls.reduce((s,p) => s+p.netGal, 0);
- const ts = pulls.reduce((s,p) => s+p.sqyds, 0);
- const tt = pulls.reduce((s,p) => s+p.tons, 0);
+ if (loads.length > 0) {
+ const tg = loads.reduce((s,p) => s+p.netGal, 0);
+ const ts = loads.reduce((s,p) => s+p.sqyds, 0);
+ const tt = loads.reduce((s,p) => s+p.tons, 0);
  const ar = ts > 0 ? tg/ts : 0;
- $("pullTotals").innerHTML = `
+ $("loadTotals").innerHTML = `
  <div class="totals-bar">
  <div class="t-item"><div class="tv">${tg.toFixed(0)}</div><div class="tl">Total Gal</div></div>
  <div class="t-item"><div class="tv">${ts.toFixed(0)}</div><div class="tl">Total SY</div></div>
@@ -445,21 +445,21 @@ function updatePullUI() {
  <div class="t-item"><div class="tv">${tt.toFixed(1)}</div><div class="tl">Total Tons</div></div>
  </div>`;
  } else {
- $("pullTotals").innerHTML = "";
+ $("loadTotals").innerHTML = "";
  }
 }
 
-["pStart","pEnd","pSqyds"].forEach(id => $(id).addEventListener("input", updatePullUI));
+["pStart","pEnd","pSqyds"].forEach(id => $(id).addEventListener("input", updateLoadUI));
 $("pMaterial").addEventListener("change", () => {
  $("pSpray").placeholder = $("pMaterial").value === "Emulsion" ? "150-165" : "380-420";
- updatePullUI();
+ updateLoadUI();
 });
 
-function savePull() {
- const { net, rate, tons, sy } = getPullVals();
+function saveLoad() {
+ const { net, rate, tons, sy } = getLoadVals();
  if (net <= 0 || !sy) return showToast("NEED START/END GAL + SQYDS");
- pulls.push({
- id: Date.now(), pull: pulls.length + 1,
+ loads.push({
+ id: Date.now(), load: loads.length + 1,
  time: new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),
  date: new Date().toLocaleDateString(),
  startGal: parseFloat($("pStart").value), endGal: parseFloat($("pEnd").value),
@@ -469,31 +469,31 @@ function savePull() {
  sprayTemp: $("pSpray").value, roadTemp: $("pRoad").value,
  ambientTemp, location: $("pLoc").value,
  });
- localStorage.setItem("src_pulls", JSON.stringify(pulls));
+ localStorage.setItem("src_loads", JSON.stringify(loads));
  $("pStart").value = ""; $("pEnd").value = ""; $("pSqyds").value = "";
- updatePullUI(); updateLogTab();
+ updateLoadUI(); updateLogTab();
  showToast("PULL SAVED");
 }
 
-function clearPull() {
+function clearLoad() {
  $("pStart").value = ""; $("pEnd").value = ""; $("pSqyds").value = "";
- $("pullResult").innerHTML = "";
+ $("loadResult").innerHTML = "";
 }
 
 // ─── LOGS ───
 function updateLogTab() {
- $("tabLogs").textContent = "Logs" + (pulls.length > 0 ? ` (${pulls.length})` : "");
+ $("tabLogs").textContent = "Logs" + (loads.length > 0 ? ` (${loads.length})` : "");
 }
 
 function renderLogs() {
  const list = $("logList");
- $("logCount").textContent = pulls.length + " pull" + (pulls.length !== 1 ? "s" : "") + " logged";
- $("btnClearAll").classList.toggle("hidden", pulls.length === 0);
+ $("logCount").textContent = loads.length + " load" + (loads.length !== 1 ? "s" : "") + " logged";
+ $("btnClearAll").classList.toggle("hidden", loads.length === 0);
 
- if (pulls.length > 0) {
- const tg = pulls.reduce((s,p) => s+p.netGal, 0);
- const ts = pulls.reduce((s,p) => s+p.sqyds, 0);
- const tt = pulls.reduce((s,p) => s+p.tons, 0);
+ if (loads.length > 0) {
+ const tg = loads.reduce((s,p) => s+p.netGal, 0);
+ const ts = loads.reduce((s,p) => s+p.sqyds, 0);
+ const tt = loads.reduce((s,p) => s+p.tons, 0);
  const ar = ts > 0 ? tg/ts : 0;
  $("logTotals").innerHTML = `
  <div class="totals-bar" style="margin-bottom:12px">
@@ -506,14 +506,14 @@ function renderLogs() {
  $("logTotals").innerHTML = "";
  }
 
- if (pulls.length === 0) {
- list.innerHTML = '<div class="empty-logs">No pulls logged yet.<br>Go shoot some oil!</div>';
+ if (loads.length === 0) {
+ list.innerHTML = '<div class="empty-logs">No loads logged yet.<br>Go shoot some oil!</div>';
  return;
  }
 
- list.innerHTML = [...pulls].reverse().map(p => `
+ list.innerHTML = [...loads].reverse().map(p => `
  <div class="log-entry">
- <div class="log-pull">Pull #${p.pull} — ${p.time}</div>
+ <div class="log-load">Load #${p.load} — ${p.time}</div>
  <div class="log-data">
  <span>${p.startGal}→${p.endGal}</span> gal · Net: <span>${p.netGal}</span><br>
  <span>${p.sqyds} sy</span> · Rate: <span>${p.avgRate} gal/sy</span> · <span>${p.tons} tons</span><br>
@@ -525,29 +525,29 @@ function renderLogs() {
 }
 
 function deletePull(id) {
- pulls = pulls.filter(p => p.id !== id);
+ loads = loads.filter(p => p.id !== id);
  // Renumber
- pulls.forEach((p, i) => p.pull = i + 1);
- localStorage.setItem("src_pulls", JSON.stringify(pulls));
- renderLogs(); updateLogTab(); updatePullUI();
+ loads.forEach((p, i) => p.load = i + 1);
+ localStorage.setItem("src_loads", JSON.stringify(loads));
+ renderLogs(); updateLogTab(); updateLoadUI();
 }
 
-function clearAllPulls() {
- if (!confirm("Clear all pulls?")) return;
- pulls = [];
- localStorage.setItem("src_pulls", JSON.stringify(pulls));
- renderLogs(); updateLogTab(); updatePullUI();
+function clearAllLoads() {
+ if (!confirm("Clear all loads?")) return;
+ loads = [];
+ localStorage.setItem("src_loads", JSON.stringify(loads));
+ renderLogs(); updateLogTab(); updateLoadUI();
  showToast("ALL PULLS CLEARED");
 }
 
 function exportCSV() {
- if (!pulls.length) return showToast("NO PULLS TO EXPORT");
- const h = "Pull,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location\n";
- const rows = pulls.map(p =>
- `${p.pull},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp},${p.roadTemp},${p.ambientTemp||""},"${p.location}"`
+ if (!loads.length) return showToast("NO PULLS TO EXPORT");
+ const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location\n";
+ const rows = loads.map(p =>
+ `${p.load},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp},${p.roadTemp},${p.ambientTemp||""},"${p.location}"`
  ).join("\n");
- const tg = pulls.reduce((s,p)=>s+p.netGal,0), ts = pulls.reduce((s,p)=>s+p.sqyds,0);
- const tt = pulls.reduce((s,p)=>s+p.tons,0), ar = ts>0?tg/ts:0;
+ const tg = loads.reduce((s,p)=>s+p.netGal,0), ts = loads.reduce((s,p)=>s+p.sqyds,0);
+ const tt = loads.reduce((s,p)=>s+p.tons,0), ar = ts>0?tg/ts:0;
  const totals = `\nTOTALS,,,,,"${tg.toFixed(1)}","${ts.toFixed(1)}","${ar.toFixed(2)}","${tt.toFixed(2)}",,,,,,`;
  const blob = new Blob([h + rows + totals], {type:"text/csv"});
  const url = URL.createObjectURL(blob);
