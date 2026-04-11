@@ -145,6 +145,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <button class="tab active" id="tabCalc" onclick="switchTab('calc')">Calculator</button>
  <button class="tab" id="tabLoad" onclick="switchTab('load')">Load Tracker</button>
  <button class="tab" id="tabLogs" onclick="switchTab('logs')">Logs</button>
+ <button class="tab" id="tabAbout" onclick="switchTab('about')">About</button>
  </div>
 
  <!-- ═══ CALCULATOR ═══ -->
@@ -277,6 +278,41 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div id="logList"></div>
  </div>
 
+ <!-- ═══ ABOUT ═══ -->
+ <div class="body hidden" id="viewAbout">
+  <div style="padding-top:8px">
+   <div class="section-label" style="margin-bottom:12px">What is this?</div>
+   <div class="result-card" style="display:block;border:1px solid var(--border)">
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px"><strong style="color:var(--text)">Shot Rate Calculator</strong> is built for spreader drivers doing oil shots. Real-time calculations, everything stays on your phone. No internet required.</p>
+    <div style="font-style:italic;color:var(--cyan);border-left:2px solid var(--yellow);padding-left:12px;margin:12px 0;font-size:12px">"I build these apps in the off-season when I'm not out on the road shooting oil. Offline-first, no cloud BS."</div>
+   </div>
+
+   <div class="section-label">Install as App</div>
+   <div class="result-card" style="display:block;border:1px solid var(--border)">
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px"><strong style="color:var(--text)">Android:</strong> Tap menu (⋮) → "Install app"</p>
+    <p style="font-size:13px;color:var(--text-dim)"><strong style="color:var(--text)">iPhone:</strong> Tap Share button → "Add to Home Screen"</p>
+   </div>
+
+   <div class="section-label">Updates</div>
+   <div class="result-card" style="display:block;border:1px solid var(--border)">
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px">This app is <strong style="color:var(--text)">100% offline</strong>. Updates don't happen automatically.</p>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px"><strong style="color:var(--text)">To update:</strong> Uninstall and reinstall the app. Takes 10 seconds and keeps all your data.</p>
+    <p style="font-size:12px;color:var(--text-dim)"><em>Stuck on old version? Clear your cache below.</em></p>
+   </div>
+
+   <div class="btn-row" style="margin-top:16px">
+    <button class="btn btn-reset" style="flex:1;background:linear-gradient(180deg,#00ccff 0%,#0099cc 100%);color:#000;border:none" onclick="clearCache()">Clear Cache</button>
+   </div>
+   <div class="btn-row">
+    <button class="btn btn-export" onclick="window.open('https://ko-fi.com/ravindergill','_blank')">☕ Support</button>
+   </div>
+
+   <div style="background:rgba(34,139,34,.1);border-left:3px solid var(--green);padding:12px;margin-top:16px;border-radius:4px;font-size:12px">
+    <strong style="color:var(--green)">Why offline?</strong> Your data stays on your phone. No servers, no tracking, no BS. Just you and your calculations.
+   </div>
+  </div>
+ </div>
+
  <div class="footer">
   <a href="https://ko-fi.com/ravindergill" target="_blank">SUPPORT</a>
  </div>
@@ -301,6 +337,26 @@ const TM = {
 };
 
 const rd = (v, p=2) => { const n = parseFloat(v); return isNaN(n) ? "" : n.toFixed(p); };
+
+function clearCache() {
+ if (!confirm('Clear cache? This will uninstall the app (data stays).')) return;
+ if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+   regs.forEach(reg => reg.unregister());
+  });
+ }
+ if ('caches' in window) {
+  caches.keys().then(names => {
+   names.forEach(name => caches.delete(name));
+  });
+ }
+ if ('indexedDB' in window) {
+  indexedDB.databases?.().then(dbs => {
+   dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+  });
+ }
+ setTimeout(() => { location.reload(); }, 500);
+}
 const corrGal = (g, temp, mat) => {
  const gl = parseFloat(g); if (isNaN(gl)) return 0;
  if (mat === "ARB / Hot Asphalt") {
@@ -329,7 +385,7 @@ document.querySelectorAll("input:not([disabled])").forEach(inp => {
 
 // ─── TABS ───
 function switchTab(t) {
- ["Calc","Load","Logs"].forEach(v => {
+ ["Calc","Load","Logs","About"].forEach(v => {
  $("view"+v).classList.toggle("hidden", v.toLowerCase() !== t);
  $("tab"+v).classList.toggle("active", v.toLowerCase() === t);
  });
@@ -342,7 +398,7 @@ function switchTab(t) {
  if (t === "logs") renderLogs();
  if (t === "load") { syncJobInfo("to-load"); updateLoadUI(); }
  if (t === "calc") syncJobInfo("to-calc");
- updateLogTab();
+ if (t !== "about") updateLogTab();
 }
 
 // ─── SYNC JOB INFO between tabs ───
