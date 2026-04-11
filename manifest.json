@@ -1,0 +1,19 @@
+{
+ "name": "Shot Rate Calculator",
+ "short_name": "SRC",
+ "description": "Spreader truck shot rate calculator — Caltrans Spec",
+ "start_url": "/",
+ "scope": "/",
+ "display": "standalone",
+ "orientation": "any",
+ "theme_color": "#1a1a1a",
+ "background_color": "#1a1a1a",
+ "icons": [
+ {
+ "src": "icon.png",
+ "sizes": "1024x1024",
+ "type": "image/png",
+ "purpose": "any maskable"
+ }
+ ]
+}

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SRC">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<title>Shot Rate Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Barlow+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+ --bg:#1a1a1a; --surface:#242424; --border:#3a3a3a; --yellow:#f5a623; --cyan:#00ccff;
+ --green:#228B22; --red:#cc3333; --text:#e8e8e8; --text-dim:#888; --input-bg:#1e1e1e;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%}
+body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+
+.app{max-width:480px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;background:var(--bg);position:relative}
+.app::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.015) 2px,rgba(255,255,255,.015) 4px);pointer-events:none;z-index:0}
+
+.header{padding:env(safe-area-inset-top, 12px) 16px 8px;text-align:center;position:relative;z-index:1;border-bottom:2px solid var(--yellow);flex-shrink:0}
+.header h1{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);text-shadow:0 0 20px rgba(245,166,35,.3)}
+.header .sub{font-size:11px;color:var(--text-dim);letter-spacing:2px;margin-top:1px}
+
+.env-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:1;font-size:12px;flex-shrink:0}
+.env-item{display:flex;align-items:center;gap:5px;color:var(--text-dim)}
+.env-val{color:var(--cyan);font-family:'Oswald',sans-serif;font-weight:500;font-size:14px}
+.env-loc{color:var(--text);font-weight:500;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.env-refresh{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;-webkit-tap-highlight-color:transparent}
+.env-refresh:hover{border-color:var(--cyan);color:var(--cyan)}
+
+.tabs{display:flex;position:relative;z-index:1;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.tab{flex:1;padding:10px;text-align:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;border:none;cursor:pointer;background:rgba(36,36,36,.5);color:var(--text-dim);transition:all .2s;-webkit-tap-highlight-color:transparent}
+.tab.active{background:rgba(26,26,26,.9);color:var(--yellow);border-bottom:2px solid var(--yellow);text-shadow:0 0 10px rgba(245,166,35,.3)}
+
+.body{flex:1;padding:12px 14px 140px;overflow-y:auto;-webkit-overflow-scrolling:touch;position:relative;z-index:1;scroll-padding-bottom:200px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:3px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:6px}
+.tag{font-size:9px;padding:1px 5px;border-radius:3px;letter-spacing:.5px}
+.tag-solve{background:var(--green);color:#fff}
+.tag-auto{background:#333;color:var(--cyan)}
+.field input,.field select{
+ background:var(--input-bg);border:2px solid var(--border);border-radius:8px;
+ padding:10px 12px;font-size:20px;font-family:'Oswald',sans-serif;font-weight:500;
+ color:var(--text);outline:none;transition:border-color .15s;width:100%;
+ -webkit-appearance:none;appearance:none
+}
+.field input:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,204,255,.2)}
+.field input.solving{border-color:var(--green);background:#1a2e1a;color:#66ff66;font-weight:700}
+.field input.computed{color:var(--cyan);background:#1a2a2e}
+.field input:disabled{opacity:.5;cursor:not-allowed}
+.field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+
+.section-label{font-family:'Oswald',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;opacity:.6}
+
+.result-card{background:var(--surface);border:1px solid var(--green);border-radius:8px;padding:12px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.result-item{text-align:center}
+.result-item .rl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+.result-item .rv{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;color:var(--green)}
+.result-item .rv.cy{color:var(--cyan)}
+.result-item .ru{font-size:11px;color:var(--text-dim)}
+
+.totals-bar{background:linear-gradient(135deg,#1a2e1a,#1e2e1e);border:1px solid var(--green);border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;justify-content:space-around;text-align:center}
+.t-item .tv{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;color:var(--yellow)}
+.t-item .tl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim)}
+
+.btn-row{display:flex;gap:8px;margin-bottom:10px}
+.btn{flex:1;padding:14px;border:none;border-radius:12px;font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.btn::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,.25) 0%,rgba(255,255,255,.05) 100%);border-radius:12px 12px 0 0;pointer-events:none}
+.btn::after{content:'';position:absolute;inset:0;border-radius:12px;box-shadow:inset 0 1px 1px rgba(255,255,255,.3),inset 0 -1px 1px rgba(0,0,0,.2);pointer-events:none}
+.btn:active{transform:scale(.97);filter:brightness(.9)}
+.btn-save{background:linear-gradient(180deg,#2ecc40 0%,#1a8a28 100%);color:#fff;box-shadow:0 4px 15px rgba(34,139,34,.4)}
+.btn-reset{background:linear-gradient(180deg,rgba(80,80,80,.8) 0%,rgba(50,50,50,.9) 100%);color:var(--text-dim);border:1px solid rgba(255,255,255,.1);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.btn-export{background:linear-gradient(180deg,#f7b733 0%,#d4941a 100%);color:#000;box-shadow:0 4px 15px rgba(245,166,35,.4)}
+.btn-danger{background:linear-gradient(180deg,#e04040 0%,#991a1a 100%);color:#fff;font-size:12px;box-shadow:0 4px 12px rgba(204,51,51,.4)}
+
+.target-bar{display:flex;gap:4px;margin-bottom:14px;background:rgba(36,36,36,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:12px;padding:4px;border:1px solid rgba(255,255,255,.08)}
+.target-btn{flex:1;padding:8px 4px;text-align:center;font-family:'Oswald',sans-serif;font-size:13px;font-weight:500;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-dim);position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent}
+.target-btn.active{background:linear-gradient(180deg,#2ecc40 0%,#1a8a28 100%);color:#fff;box-shadow:0 2px 10px rgba(34,139,34,.4)}
+.target-btn.active::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,transparent 100%);border-radius:10px 10px 0 0;pointer-events:none}
+
+.log-count{font-size:11px;color:var(--text-dim);margin-bottom:6px}
+.log-entry{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:13px;position:relative}
+.log-pull{font-family:'Oswald',sans-serif;color:var(--yellow);font-size:14px;font-weight:600}
+.log-data{color:var(--text-dim);margin-top:4px;line-height:1.6}
+.log-data span{color:var(--text);font-weight:500}
+.log-del{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:4px;opacity:.6;-webkit-tap-highlight-color:transparent}
+.log-del:hover{opacity:1}
+.empty-logs{text-align:center;color:var(--text-dim);padding:40px 0;font-size:14px}
+
+.footer{text-align:center;padding:10px;font-size:11px;color:var(--text-dim);letter-spacing:1px;border-top:1px solid var(--border);position:relative;z-index:1;flex-shrink:0}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 24px;border-radius:6px;font-family:'Oswald',sans-serif;font-size:14px;letter-spacing:1px;z-index:100;animation:fadeup .3s ease}
+@keyframes fadeup{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+ <div class="header">
+ <h1>Shot Rate Calculator</h1>
+ <div class="sub">by Ravinder Gill</div>
+ </div>
+
+ <div class="env-bar">
+ <div class="env-item">
+ <span>📍</span>
+ <span class="env-loc" id="envLoc">Locating...</span>
+ </div>
+ <div class="env-item">
+ <span>🌡</span>
+ <span class="env-val" id="envTemp">...</span>
+ <span>AMB</span>
+ </div>
+ <button class="env-refresh" onclick="fetchEnv()">↻</button>
+ </div>
+
+ <div class="tabs">
+ <button class="tab active" id="tabCalc" onclick="switchTab('calc')">Calculator</button>
+ <button class="tab" id="tabPull" onclick="switchTab('pull')">Pull Tracker</button>
+ <button class="tab" id="tabLogs" onclick="switchTab('logs')">Logs</button>
+ </div>
+
+ <!-- ═══ CALCULATOR ═══ -->
+ <div class="body" id="viewCalc">
+ <div class="target-bar" id="targetBar"></div>
+ <div class="section-label" id="solveLabel">Solve for Rate</div>
+ <div class="grid">
+ <div class="field">
+ <label>Gallons <span class="tag tag-solve hidden" id="tagGallons">SOLVING</span></label>
+ <input id="cGal" inputmode="decimal" placeholder="">
+ </div>
+ <div class="field">
+ <label>Rate (gal/sy) <span class="tag tag-solve hidden" id="tagRate">SOLVING</span></label>
+ <input id="cRate" inputmode="decimal" placeholder="" class="solving">
+ </div>
+ <div class="field">
+ <label>Width (ft) <span class="tag tag-solve hidden" id="tagWidth">SOLVING</span></label>
+ <input id="cWidth" inputmode="decimal" placeholder="">
+ </div>
+ <div class="field">
+ <label>Length (ft) <span class="tag tag-solve hidden" id="tagLength">SOLVING</span></label>
+ <input id="cLen" inputmode="decimal" placeholder="">
+ </div>
+ </div>
+ <div class="section-label">Output</div>
+ <div class="grid">
+ <div class="field">
+ <label>Sq Yards <span class="tag tag-auto">AUTO</span></label>
+ <input id="cSqyds" disabled class="computed">
+ </div>
+ <div class="field">
+ <label>Tons <span class="tag tag-auto">AUTO</span></label>
+ <input id="cTons" disabled class="computed">
+ </div>
+ </div>
+ <div class="section-label">Job Info</div>
+ <div class="grid">
+ <div class="field">
+ <label>Truck #</label>
+ <input id="truck" inputmode="text" placeholder="">
+ </div>
+ <div class="field">
+ <label>Material</label>
+ <select id="material">
+ <option>Emulsion</option>
+ <option>ARB / Hot Asphalt</option>
+ </select>
+ </div>
+ </div>
+ <div class="grid-3">
+ <div class="field">
+ <label>Spray °F</label>
+ <input id="sprayTemp" inputmode="decimal" placeholder="150-165">
+ </div>
+ <div class="field">
+ <label>Road °F</label>
+ <input id="roadTemp" inputmode="decimal" placeholder="Temp gun">
+ </div>
+ <div class="field">
+ <label>Location</label>
+ <input id="locInput" inputmode="text" placeholder="Auto GPS">
+ </div>
+ </div>
+ <div class="btn-row">
+ <button class="btn btn-reset" onclick="resetCalc()">Reset</button>
+ </div>
+ </div>
+
+ <!-- ═══ PULL TRACKER ═══ -->
+ <div class="body hidden" id="viewPull">
+ <div id="pullTotals"></div>
+ <div class="section-label" id="pullLabel">Pull #1</div>
+ <div class="grid-3">
+ <div class="field">
+ <label>Start Gal</label>
+ <input id="pStart" inputmode="decimal" placeholder="3600">
+ </div>
+ <div class="field">
+ <label>End Gal</label>
+ <input id="pEnd" inputmode="decimal" placeholder="200">
+ </div>
+ <div class="field">
+ <label>Sq Yards</label>
+ <input id="pSqyds" inputmode="decimal" placeholder="From truck">
+ </div>
+ </div>
+ <div id="pullResult"></div>
+ <div class="section-label">Job Info</div>
+ <div class="grid">
+ <div class="field">
+ <label>Truck #</label>
+ <input id="pTruck" inputmode="text">
+ </div>
+ <div class="field">
+ <label>Material</label>
+ <select id="pMaterial">
+ <option>Emulsion</option>
+ <option>ARB / Hot Asphalt</option>
+ </select>
+ </div>
+ </div>
+ <div class="grid-3">
+ <div class="field">
+ <label>Spray °F</label>
+ <input id="pSpray" inputmode="decimal" placeholder="150-165">
+ </div>
+ <div class="field">
+ <label>Road °F</label>
+ <input id="pRoad" inputmode="decimal" placeholder="Temp gun">
+ </div>
+ <div class="field">
+ <label>Location</label>
+ <input id="pLoc" inputmode="text" placeholder="Auto GPS">
+ </div>
+ </div>
+ <div class="btn-row">
+ <button class="btn btn-save" onclick="savePull()">Save Pull</button>
+ <button class="btn btn-reset" onclick="clearPull()">Clear</button>
+ </div>
+ </div>
+
+ <!-- ═══ LOGS ═══ -->
+ <div class="body hidden" id="viewLogs">
+ <div id="logTotals"></div>
+ <div class="btn-row">
+ <button class="btn btn-export" onclick="exportCSV()">Export CSV</button>
+ <button class="btn btn-danger hidden" id="btnClearAll" onclick="clearAllPulls()">Clear All</button>
+ </div>
+ <div class="log-count" id="logCount">0 pulls logged</div>
+ <div id="logList"></div>
+ </div>
+
+ <div class="footer">SRC v3.1 — Caltrans Spec</div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ─── CONSTANTS ───
+const BASE_GAL = { Emulsion: 240, "ARB / Hot Asphalt": 253 };
+const TM = {
+ 375:1.0,376:1.002667,377:1.005333,378:1.008,379:1.010667,
+ 380:1.013333,381:1.016,382:1.018667,383:1.021333,384:1.024,
+ 385:1.026667,386:1.029333,387:1.032,388:1.034667,389:1.037333,
+ 390:1.04,391:1.042667,392:1.045333,393:1.048,394:1.050667,
+ 395:1.053333,396:1.056,397:1.058667,398:1.061333,399:1.064,
+ 400:1.066667,401:1.069333,402:1.072,403:1.074667,404:1.077333,
+ 405:1.08,406:1.082667,407:1.085333,408:1.088,409:1.090667,
+ 410:1.093333,411:1.096,412:1.098667,413:1.101333,414:1.104,
+ 415:1.106667,416:1.109333,417:1.112,418:1.114667,419:1.117333,
+ 420:1.12
+};
+
+const rd = (v, p=2) => { const n = parseFloat(v); return isNaN(n) ? "" : n.toFixed(p); };
+const corrGal = (g, temp, mat) => {
+ const gl = parseFloat(g); if (isNaN(gl)) return 0;
+ if (mat === "ARB / Hot Asphalt") {
+ const t = Math.round(parseFloat(temp));
+ if (TM[t]) return gl * TM[t];
+ if (!isNaN(t)) return gl * (t / 375);
+ }
+ return gl;
+};
+
+// ─── STATE ───
+let calcTarget = "Rate";
+let pulls = JSON.parse(localStorage.getItem("src_pulls") || "[]");
+let ambientTemp = null;
+let locStr = "";
+
+// ─── DOM ───
+const $ = id => document.getElementById(id);
+
+// ─── KEYBOARD SCROLL FIX ───
+document.querySelectorAll("input:not([disabled])").forEach(inp => {
+ inp.addEventListener("focus", function() {
+ setTimeout(() => { this.scrollIntoView({ behavior: "smooth", block: "center" }); }, 300);
+ });
+});
+
+// ─── TABS ───
+function switchTab(t) {
+ ["Calc","Pull","Logs"].forEach(v => {
+ $("view"+v).classList.toggle("hidden", v.toLowerCase() !== t);
+ $("tab"+v).classList.toggle("active", v.toLowerCase() === t);
+ });
+ if (t === "logs") renderLogs();
+ if (t === "pull") { syncJobInfo("to-pull"); updatePullUI(); }
+ if (t === "calc") syncJobInfo("to-calc");
+ updateLogTab();
+}
+
+// ─── SYNC JOB INFO between tabs ───
+function syncJobInfo(dir) {
+ if (dir === "to-pull") {
+ $("pTruck").value = $("truck").value;
+ $("pMaterial").value = $("material").value;
+ $("pSpray").value = $("sprayTemp").value;
+ $("pRoad").value = $("roadTemp").value;
+ $("pLoc").value = $("locInput").value;
+ } else {
+ $("truck").value = $("pTruck").value;
+ $("material").value = $("pMaterial").value;
+ $("sprayTemp").value = $("pSpray").value;
+ $("roadTemp").value = $("pRoad").value;
+ $("locInput").value = $("pLoc").value;
+ }
+}
+
+// ─── CALCULATOR ───
+function buildTargetBar() {
+ const bar = $("targetBar");
+ bar.innerHTML = ["Rate","Gallons","Width","Length"].map(t =>
+ `<button class="target-btn ${t===calcTarget?"active":""}" onclick="setTarget('${t}')">${t}</button>`
+ ).join("");
+}
+
+function setTarget(t) {
+ calcTarget = t;
+ buildTargetBar();
+ updateCalcTags();
+ recalc();
+}
+
+function updateCalcTags() {
+ $("solveLabel").textContent = "Solve for " + calcTarget;
+ ["Gallons","Rate","Width","Length"].forEach(k => {
+ const tag = $("tag"+k);
+ const inp = $(k==="Gallons"?"cGal":k==="Rate"?"cRate":k==="Width"?"cWidth":"cLen");
+ if (k === calcTarget) { tag.classList.remove("hidden"); inp.classList.add("solving"); }
+ else { tag.classList.add("hidden"); inp.classList.remove("solving"); }
+ });
+}
+
+function recalc() {
+ const g = parseFloat($("cGal").value), r = parseFloat($("cRate").value);
+ const w = parseFloat($("cWidth").value), l = parseFloat($("cLen").value);
+ const mat = $("material").value, temp = $("sprayTemp").value;
+
+ if (calcTarget === "Rate" && g && w && l) $("cRate").value = rd((g * 9) / (l * w));
+ if (calcTarget === "Gallons" && r && w && l) $("cGal").value = rd((r * l * w) / 9, 1);
+ if (calcTarget === "Width" && g && r && l) $("cWidth").value = rd((g * 9) / (l * r));
+ if (calcTarget === "Length" && g && r && w) $("cLen").value = rd((g * 9) / (w * r));
+
+ if (l && w) {
+ $("cSqyds").value = rd((l * w) / 9, 1);
+ const base = BASE_GAL[mat];
+ const effG = parseFloat($("cGal").value);
+ if (base && effG) $("cTons").value = rd(corrGal(effG, temp, mat) / base);
+ else $("cTons").value = "";
+ } else {
+ $("cSqyds").value = "";
+ $("cTons").value = "";
+ }
+
+ // Update spray placeholder based on material
+ $("sprayTemp").placeholder = mat === "Emulsion" ? "150-165" : "380-420";
+ $("pSpray").placeholder = mat === "Emulsion" ? "150-165" : "380-420";
+}
+
+["cGal","cRate","cWidth","cLen","sprayTemp"].forEach(id => {
+ $(id).addEventListener("input", recalc);
+});
+$("material").addEventListener("change", () => { recalc(); });
+
+function resetCalc() {
+ ["cGal","cRate","cWidth","cLen","cSqyds","cTons"].forEach(id => $(id).value = "");
+ calcTarget = "Rate"; buildTargetBar(); updateCalcTags();
+}
+
+// ─── PULL TRACKER ───
+function getPullVals() {
+ const s = parseFloat($("pStart").value), e = parseFloat($("pEnd").value);
+ const sy = parseFloat($("pSqyds").value);
+ const net = (s && e) ? s - e : 0;
+ const rate = (net > 0 && sy > 0) ? net / sy : 0;
+ const mat = $("pMaterial").value;
+ const tons = net > 0 ? corrGal(net, $("pSpray").value, mat) / (BASE_GAL[mat] || 240) : 0;
+ return { net, rate, tons, sy };
+}
+
+function updatePullUI() {
+ $("pullLabel").textContent = "Pull #" + (pulls.length + 1);
+ const { net, rate, tons } = getPullVals();
+
+ // Result card
+ if (net > 0) {
+ $("pullResult").innerHTML = `
+ <div class="result-card">
+ <div class="result-item"><div class="rl">Net Gallons</div><div class="rv">${net.toFixed(0)}</div></div>
+ <div class="result-item"><div class="rl">Avg Rate</div><div class="rv cy">${rate > 0 ? rate.toFixed(2) : "—"}</div><div class="ru">gal/sy</div></div>
+ <div class="result-item"><div class="rl">Tons</div><div class="rv">${tons > 0 ? tons.toFixed(2) : "—"}</div></div>
+ <div class="result-item"><div class="rl">Pull #</div><div class="rv cy">${pulls.length + 1}</div></div>
+ </div>`;
+ } else {
+ $("pullResult").innerHTML = "";
+ }
+
+ // Totals
+ if (pulls.length > 0) {
+ const tg = pulls.reduce((s,p) => s+p.netGal, 0);
+ const ts = pulls.reduce((s,p) => s+p.sqyds, 0);
+ const tt = pulls.reduce((s,p) => s+p.tons, 0);
+ const ar = ts > 0 ? tg/ts : 0;
+ $("pullTotals").innerHTML = `
+ <div class="totals-bar">
+ <div class="t-item"><div class="tv">${tg.toFixed(0)}</div><div class="tl">Total Gal</div></div>
+ <div class="t-item"><div class="tv">${ts.toFixed(0)}</div><div class="tl">Total SY</div></div>
+ <div class="t-item"><div class="tv">${ar.toFixed(2)}</div><div class="tl">Avg Rate</div></div>
+ <div class="t-item"><div class="tv">${tt.toFixed(1)}</div><div class="tl">Total Tons</div></div>
+ </div>`;
+ } else {
+ $("pullTotals").innerHTML = "";
+ }
+}
+
+["pStart","pEnd","pSqyds"].forEach(id => $(id).addEventListener("input", updatePullUI));
+$("pMaterial").addEventListener("change", () => {
+ $("pSpray").placeholder = $("pMaterial").value === "Emulsion" ? "150-165" : "380-420";
+ updatePullUI();
+});
+
+function savePull() {
+ const { net, rate, tons, sy } = getPullVals();
+ if (net <= 0 || !sy) return showToast("NEED START/END GAL + SQYDS");
+ pulls.push({
+ id: Date.now(), pull: pulls.length + 1,
+ time: new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),
+ date: new Date().toLocaleDateString(),
+ startGal: parseFloat($("pStart").value), endGal: parseFloat($("pEnd").value),
+ netGal: net, sqyds: sy, avgRate: parseFloat(rate.toFixed(2)),
+ tons: parseFloat(tons.toFixed(2)),
+ truck: $("pTruck").value, material: $("pMaterial").value,
+ sprayTemp: $("pSpray").value, roadTemp: $("pRoad").value,
+ ambientTemp, location: $("pLoc").value,
+ });
+ localStorage.setItem("src_pulls", JSON.stringify(pulls));
+ $("pStart").value = ""; $("pEnd").value = ""; $("pSqyds").value = "";
+ updatePullUI(); updateLogTab();
+ showToast("PULL SAVED");
+}
+
+function clearPull() {
+ $("pStart").value = ""; $("pEnd").value = ""; $("pSqyds").value = "";
+ $("pullResult").innerHTML = "";
+}
+
+// ─── LOGS ───
+function updateLogTab() {
+ $("tabLogs").textContent = "Logs" + (pulls.length > 0 ? ` (${pulls.length})` : "");
+}
+
+function renderLogs() {
+ const list = $("logList");
+ $("logCount").textContent = pulls.length + " pull" + (pulls.length !== 1 ? "s" : "") + " logged";
+ $("btnClearAll").classList.toggle("hidden", pulls.length === 0);
+
+ if (pulls.length > 0) {
+ const tg = pulls.reduce((s,p) => s+p.netGal, 0);
+ const ts = pulls.reduce((s,p) => s+p.sqyds, 0);
+ const tt = pulls.reduce((s,p) => s+p.tons, 0);
+ const ar = ts > 0 ? tg/ts : 0;
+ $("logTotals").innerHTML = `
+ <div class="totals-bar" style="margin-bottom:12px">
+ <div class="t-item"><div class="tv">${tg.toFixed(0)}</div><div class="tl">Total Gal</div></div>
+ <div class="t-item"><div class="tv">${ts.toFixed(0)}</div><div class="tl">Total SY</div></div>
+ <div class="t-item"><div class="tv">${ar.toFixed(2)}</div><div class="tl">Avg Rate</div></div>
+ <div class="t-item"><div class="tv">${tt.toFixed(1)}</div><div class="tl">Total Tons</div></div>
+ </div>`;
+ } else {
+ $("logTotals").innerHTML = "";
+ }
+
+ if (pulls.length === 0) {
+ list.innerHTML = '<div class="empty-logs">No pulls logged yet.<br>Go shoot some oil!</div>';
+ return;
+ }
+
+ list.innerHTML = [...pulls].reverse().map(p => `
+ <div class="log-entry">
+ <div class="log-pull">Pull #${p.pull} — ${p.time}</div>
+ <div class="log-data">
+ <span>${p.startGal}→${p.endGal}</span> gal · Net: <span>${p.netGal}</span><br>
+ <span>${p.sqyds} sy</span> · Rate: <span>${p.avgRate} gal/sy</span> · <span>${p.tons} tons</span><br>
+ ${p.material}${p.sprayTemp ? " · Spray: <span>"+p.sprayTemp+"°F</span>" : ""}${p.roadTemp ? " · Road: <span>"+p.roadTemp+"°F</span>" : ""}${p.ambientTemp ? " · Amb: <span>"+p.ambientTemp+"°F</span>" : ""}${p.truck ? " · Truck #"+p.truck : ""}
+ </div>
+ <button class="log-del" onclick="deletePull(${p.id})">✕</button>
+ </div>
+ `).join("");
+}
+
+function deletePull(id) {
+ pulls = pulls.filter(p => p.id !== id);
+ // Renumber
+ pulls.forEach((p, i) => p.pull = i + 1);
+ localStorage.setItem("src_pulls", JSON.stringify(pulls));
+ renderLogs(); updateLogTab(); updatePullUI();
+}
+
+function clearAllPulls() {
+ if (!confirm("Clear all pulls?")) return;
+ pulls = [];
+ localStorage.setItem("src_pulls", JSON.stringify(pulls));
+ renderLogs(); updateLogTab(); updatePullUI();
+ showToast("ALL PULLS CLEARED");
+}
+
+function exportCSV() {
+ if (!pulls.length) return showToast("NO PULLS TO EXPORT");
+ const h = "Pull,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location\n";
+ const rows = pulls.map(p =>
+ `${p.pull},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp},${p.roadTemp},${p.ambientTemp||""},"${p.location}"`
+ ).join("\n");
+ const tg = pulls.reduce((s,p)=>s+p.netGal,0), ts = pulls.reduce((s,p)=>s+p.sqyds,0);
+ const tt = pulls.reduce((s,p)=>s+p.tons,0), ar = ts>0?tg/ts:0;
+ const totals = `\nTOTALS,,,,,"${tg.toFixed(1)}","${ts.toFixed(1)}","${ar.toFixed(2)}","${tt.toFixed(2)}",,,,,,`;
+ const blob = new Blob([h + rows + totals], {type:"text/csv"});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a"); a.href = url;
+ a.download = "SRC_" + new Date().toISOString().slice(0,10) + ".csv";
+ a.click(); URL.revokeObjectURL(url);
+ showToast("CSV EXPORTED");
+}
+
+// ─── TOAST ───
+function showToast(msg) {
+ const t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
+ setTimeout(() => t.classList.add("hidden"), 2000);
+}
+
+// ─── GPS + WEATHER ───
+function fetchEnv() {
+ $("envLoc").textContent = "Locating...";
+ $("envTemp").textContent = "...";
+ if (!navigator.geolocation) { $("envLoc").textContent = "No GPS"; return; }
+ navigator.geolocation.getCurrentPosition(async pos => {
+ const {latitude: lat, longitude: lon} = pos.coords;
+ try {
+ const g = await (await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)).json();
+ const city = g?.address?.city || g?.address?.town || g?.address?.county || "";
+ const state = g?.address?.state || "";
+ locStr = city && state ? `${city}, ${state}` : city || state || "";
+ if (locStr) {
+ $("envLoc").textContent = locStr;
+ $("locInput").value = locStr;
+ $("pLoc").value = locStr;
+ }
+ } catch(e) { $("envLoc").textContent = "GPS Error"; }
+ try {
+ const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`)).json();
+ if (w?.current_weather?.temperature != null) {
+ ambientTemp = Math.round(w.current_weather.temperature);
+ $("envTemp").textContent = ambientTemp + "°F";
+ }
+ } catch(e) { $("envTemp").textContent = "—"; }
+ }, () => { $("envLoc").textContent = "No GPS"; $("envTemp").textContent = "—"; }, {timeout:10000});
+}
+
+// ─── SERVICE WORKER REGISTRATION ───
+if ("serviceWorker" in navigator) {
+ navigator.serviceWorker.register("/sw.js").catch(err => console.log("SW failed:", err));
+}
+
+// ─── INIT ───
+buildTargetBar();
+updateCalcTags();
+updateLogTab();
+fetchEnv();
+
+// Persist truck
+const savedTruck = localStorage.getItem("src_truck");
+if (savedTruck) { $("truck").value = savedTruck; $("pTruck").value = savedTruck; }
+$("truck").addEventListener("change", () => { localStorage.setItem("src_truck", $("truck").value); });
+$("pTruck").addEventListener("change", () => { localStorage.setItem("src_truck", $("pTruck").value); });
+
+// Persist material
+const savedMat = localStorage.getItem("src_material");
+if (savedMat) { $("material").value = savedMat; $("pMaterial").value = savedMat; }
+$("material").addEventListener("change", () => { localStorage.setItem("src_material", $("material").value); });
+$("pMaterial").addEventListener("change", () => { localStorage.setItem("src_material", $("pMaterial").value); });
+</script>
+</body>
+</html>
