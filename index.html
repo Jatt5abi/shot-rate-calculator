@@ -142,7 +142,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 
  <div class="tabs">
  <button class="tab active" id="tabCalc" onclick="switchTab('calc')">Calculator</button>
- <button class="tab" id="tabPull" onclick="switchTab('load')">Load Tracker</button>
+ <button class="tab" id="tabLoad" onclick="switchTab('load')">Load Tracker</button>
  <button class="tab" id="tabLogs" onclick="switchTab('logs')">Logs</button>
  </div>
 
@@ -212,7 +212,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  </div>
  </div>
 
- <!-- ═══ PULL TRACKER ═══ -->
+ <!-- ═══ LOAD TRACKER ═══ -->
  <div class="body hidden" id="viewPull">
  <div id="loadTotals"></div>
  <div class="section-label" id="loadLabel">Load #1</div>
@@ -417,7 +417,7 @@ function resetCalc() {
  calcTarget = "Rate"; buildTargetBar(); updateCalcTags();
 }
 
-// ─── PULL TRACKER ───
+// ─── LOAD TRACKER ───
 function getLoadVals() {
  const s = parseFloat($("pStart").value), e = parseFloat($("pEnd").value);
  const sy = parseFloat($("pSqyds").value);
