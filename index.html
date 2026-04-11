@@ -385,8 +385,11 @@ document.querySelectorAll("input:not([disabled])").forEach(inp => {
 
 // ─── TABS ───
 function switchTab(t) {
+ const viewMap = {calc:"Calc", load:"Pull", logs:"Logs", about:"About"};
+ ["Calc","Pull","Logs","About"].forEach(v => {
+ $("view"+v).classList.toggle("hidden", v.toLowerCase() !== (viewMap[t] || t).toLowerCase());
+ });
  ["Calc","Load","Logs","About"].forEach(v => {
- $("view"+v).classList.toggle("hidden", v.toLowerCase() !== t);
  $("tab"+v).classList.toggle("active", v.toLowerCase() === t);
  });
  const footer = $("footer");
