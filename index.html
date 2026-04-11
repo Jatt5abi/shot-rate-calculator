@@ -385,19 +385,20 @@ document.querySelectorAll("input:not([disabled])").forEach(inp => {
 
 // ─── TABS ───
 function switchTab(t) {
- const viewMap = {calc:"Calc", load:"Pull", logs:"Logs", about:"About"};
- ["Calc","Pull","Logs","About"].forEach(v => {
- $("view"+v).classList.toggle("hidden", v.toLowerCase() !== (viewMap[t] || t).toLowerCase());
- });
- ["Calc","Load","Logs","About"].forEach(v => {
- $("tab"+v).classList.toggle("active", v.toLowerCase() === t);
- });
+ // Hide all views, show the one that matches
+ $('viewCalc').classList.toggle('hidden', t !== 'calc');
+ $('viewPull').classList.toggle('hidden', t !== 'load');
+ $('viewLogs').classList.toggle('hidden', t !== 'logs');
+ $('viewAbout').classList.toggle('hidden', t !== 'about');
+ // Update tab highlights
+ $('tabCalc').classList.toggle('active', t === 'calc');
+ $('tabLoad').classList.toggle('active', t === 'load');
+ $('tabLogs').classList.toggle('active', t === 'logs');
+ $('tabAbout').classList.toggle('active', t === 'about');
+ // Show footer only on load/logs
  const footer = $("footer");
- if (t === "load" || t === "logs") {
-  footer.classList.add("show");
- } else {
-  footer.classList.remove("show");
- }
+ footer.classList.toggle("show", t === "load" || t === "logs");
+ // Handle tab-specific init
  if (t === "logs") renderLogs();
  if (t === "load") { syncJobInfo("to-load"); updateLoadUI(); }
  if (t === "calc") syncJobInfo("to-calc");
