@@ -1,9 +1,11 @@
-const CACHE_NAME = 'src-v3.2';
+const CACHE_NAME = 'src-v3.3';
 const ASSETS = [
  '/',
  '/index.html',
  '/icon-192.png',
  '/icon-512.png',
+ '/icon-maskable-192.png',
+ '/icon-maskable-512.png',
  '/manifest.json'
 ];
 
