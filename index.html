@@ -648,9 +648,9 @@ function showToast(msg) {
 
 // ─── GPS + WEATHER ───
 function fetchEnv() {
- $("envLocInput").textContent = "Locating...";
+ $("envLocInput").placeholder = "Locating...";
  $("envTemp").textContent = "...";
- if (!navigator.geolocation) { $("envLocInput").textContent = "No GPS"; return; }
+ if (!navigator.geolocation) { $("envLocInput").placeholder = "No GPS"; return; }
  navigator.geolocation.getCurrentPosition(async pos => {
  const {latitude: lat, longitude: lon} = pos.coords;
  try {
@@ -659,11 +659,11 @@ function fetchEnv() {
  const state = g?.address?.state || "";
  locStr = city && state ? `${city}, ${state}` : city || state || "";
  if (locStr) {
- $("envLocInput").textContent = locStr;
+ $("envLocInput").value = locStr;
  $("locInput").value = locStr;
  $("pLoc").value = locStr;
  }
- } catch(e) { $("envLocInput").textContent = "GPS Error"; }
+ } catch(e) { localStorage.setItem("src_location", locStr); }
  try {
  const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`)).json();
  if (w?.current_weather?.temperature != null) {
@@ -671,7 +671,7 @@ function fetchEnv() {
  $("envTemp").textContent = ambientTemp + "°F";
  }
  } catch(e) { $("envTemp").textContent = "—"; }
- }, () => { $("envLocInput").textContent = "No GPS"; $("envTemp").textContent = "—"; }, {timeout:10000});
+ }, () => { $("envLocInput").placeholder = "No GPS"; $("envTemp").textContent = "—"; }, {timeout:10000});
 }
 
 // ─── INIT ───
