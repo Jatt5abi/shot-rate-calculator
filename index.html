@@ -125,7 +125,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div class="header">
  <h1>Shot Rate Calculator</h1>
  <div class="sub">by Ravinder Gill</div>
- <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.2</div>
+ <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.3</div>
  </div>
 
  <div class="env-bar">
@@ -134,7 +134,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="envLocInput" type="text" placeholder="" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
  </div>
  <div class="env-item" style="flex:0.8">
- <span>#</span>
+ <span>Job#</span>
  <input id="envJobInput" type="text" placeholder="" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
  </div>
  <div class="env-item" style="flex:0.6;justify-content:flex-end">
@@ -358,7 +358,7 @@ function clearCache() {
    dbs.forEach(db => indexedDB.deleteDatabase(db.name));
   });
  }
- setTimeout(() => { location.reload(); }, 500);
+ setTimeout(() => { location.href = location.href.split('?')[0] + '?v=' + Date.now(); }, 300);
 }
 const corrGal = (g, temp, mat) => {
  const gl = parseFloat(g); if (isNaN(gl)) return 0;
