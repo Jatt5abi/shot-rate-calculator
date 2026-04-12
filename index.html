@@ -39,11 +39,10 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 .header h1{font-family:'Oswald',sans-serif;font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--yellow);text-shadow:0 0 20px rgba(245,166,35,.3)}
 .header .sub{font-size:11px;color:var(--text-dim);letter-spacing:2px;margin-top:1px}
 
-.env-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:1;font-size:12px;flex-shrink:0}
-.env-item{display:flex;align-items:center;gap:5px;color:var(--text-dim)}
-.env-val{color:var(--cyan);font-family:'Oswald',sans-serif;font-weight:500;font-size:14px}
-.env-loc{color:var(--text);font-weight:500;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.env-refresh{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;-webkit-tap-highlight-color:transparent}
+.env-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:1;font-size:12px;flex-shrink:0;gap:8px}
+.env-item{display:flex;align-items:center;gap:4px;color:var(--text-dim);min-width:0}
+.env-val{color:var(--cyan);font-family:'Oswald',sans-serif;font-weight:500;font-size:13px}
+.env-refresh{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;-webkit-tap-highlight-color:transparent;flex-shrink:0}
 .env-refresh:hover{border-color:var(--cyan);color:var(--cyan)}
 
 .tabs{display:flex;position:relative;z-index:1;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
@@ -126,18 +125,21 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div class="header">
  <h1>Shot Rate Calculator</h1>
  <div class="sub">by Ravinder Gill</div>
- <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.0</div>
+ <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.1</div>
  </div>
 
  <div class="env-bar">
- <div class="env-item">
+ <div class="env-item" style="flex:1;min-width:0">
  <span>📍</span>
- <span class="env-loc" id="envLoc">Locating...</span>
+ <input id="envLocInput" type="text" placeholder="Location" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
  </div>
- <div class="env-item">
+ <div class="env-item" style="flex:0.8">
+ <span>Job#</span>
+ <input id="envJobInput" type="text" placeholder="Job#" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
+ </div>
+ <div class="env-item" style="flex:0.6;justify-content:flex-end">
  <span>🌡</span>
- <span class="env-val" id="envTemp">...</span>
- <span>AMB</span>
+ <span class="env-val" id="envTemp" style="margin-left:3px">...</span>
  </div>
  <button class="env-refresh" onclick="fetchEnv()">↻</button>
  </div>
@@ -206,8 +208,8 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="roadTemp" inputmode="decimal" placeholder="Temp gun">
  </div>
  <div class="field">
- <label>Location</label>
- <input id="locInput" inputmode="text" placeholder="Auto GPS">
+ <label>Notes</label>
+ <input id="calcNotes" inputmode="text" placeholder="Optional">
  </div>
  </div>
  <div class="btn-row">
@@ -258,8 +260,8 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="pRoad" inputmode="decimal" placeholder="Temp gun">
  </div>
  <div class="field">
- <label>Location</label>
- <input id="pLoc" inputmode="text" placeholder="Auto GPS">
+ <label>Notes</label>
+ <input id="pNotes" inputmode="text" placeholder="Optional">
  </div>
  </div>
  <div class="btn-row">
