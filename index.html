@@ -125,13 +125,13 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div class="header">
  <h1>Shot Rate Calculator</h1>
  <div class="sub">by Ravinder Gill</div>
- <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.1</div>
+ <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.2</div>
  </div>
 
  <div class="env-bar">
  <div class="env-item" style="flex:1;min-width:0">
  <span>📍</span>
- <input id="envLocInput" type="text" placeholder="Location" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
+ <input id="envLocInputInput" type="text" placeholder="Location" style="background:transparent;border:none;color:var(--cyan);font-size:13px;padding:0;width:100%;font-family:'Oswald',sans-serif;outline:none;-webkit-appearance:none" />
  </div>
  <div class="env-item" style="flex:0.8">
  <span>Job#</span>
@@ -625,7 +625,7 @@ function clearAllLoads() {
 
 function exportCSV() {
  if (!loads.length) return showToast("NO PULLS TO EXPORT");
- const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location\n";
+ const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location,JobNum\n";
  const rows = loads.map(p =>
  `${p.load},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp},${p.roadTemp},${p.ambientTemp||""},"${p.location}"`
  ).join("\n");
@@ -648,9 +648,9 @@ function showToast(msg) {
 
 // ─── GPS + WEATHER ───
 function fetchEnv() {
- $("envLoc").textContent = "Locating...";
+ $("envLocInput").textContent = "Locating...";
  $("envTemp").textContent = "...";
- if (!navigator.geolocation) { $("envLoc").textContent = "No GPS"; return; }
+ if (!navigator.geolocation) { $("envLocInput").textContent = "No GPS"; return; }
  navigator.geolocation.getCurrentPosition(async pos => {
  const {latitude: lat, longitude: lon} = pos.coords;
  try {
@@ -659,11 +659,11 @@ function fetchEnv() {
  const state = g?.address?.state || "";
  locStr = city && state ? `${city}, ${state}` : city || state || "";
  if (locStr) {
- $("envLoc").textContent = locStr;
+ $("envLocInput").textContent = locStr;
  $("locInput").value = locStr;
  $("pLoc").value = locStr;
  }
- } catch(e) { $("envLoc").textContent = "GPS Error"; }
+ } catch(e) { $("envLocInput").textContent = "GPS Error"; }
  try {
  const w = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`)).json();
  if (w?.current_weather?.temperature != null) {
@@ -671,7 +671,7 @@ function fetchEnv() {
  $("envTemp").textContent = ambientTemp + "°F";
  }
  } catch(e) { $("envTemp").textContent = "—"; }
- }, () => { $("envLoc").textContent = "No GPS"; $("envTemp").textContent = "—"; }, {timeout:10000});
+ }, () => { $("envLocInput").textContent = "No GPS"; $("envTemp").textContent = "—"; }, {timeout:10000});
 }
 
 // ─── INIT ───
@@ -680,6 +680,16 @@ updateCalcTags();
 updateLogTab();
 renderLogs();
 fetchEnv();
+
+// Persist location
+const savedLoc = localStorage.getItem("src_location");
+if (savedLoc) { $("envLocInput").value = savedLoc; }
+$("envLocInput").addEventListener("change", () => { localStorage.setItem("src_location", $("envLocInput").value); });
+
+// Persist job #
+const savedJob = localStorage.getItem("src_jobnum");
+if (savedJob) { $("envJobInput").value = savedJob; }
+$("envJobInput").addEventListener("change", () => { localStorage.setItem("src_jobnum", $("envJobInput").value); });
 
 // Persist truck
 const savedTruck = localStorage.getItem("src_truck");
