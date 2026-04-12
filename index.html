@@ -125,7 +125,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div class="header">
  <h1>Shot Rate Calculator</h1>
  <div class="sub">by Ravinder Gill</div>
- <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.3</div>
+ <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.4</div>
  </div>
 
  <div class="env-bar">
@@ -540,6 +540,7 @@ $("pMaterial").addEventListener("change", () => {
 
 function saveLoad() {
  const { net, rate, tons, sy } = getLoadVals();
+ console.log('saveLoad:', {net, sy, start: $("pStart").value, end: $("pEnd").value, sqyds: $("pSqyds").value});
  if (net <= 0 || !sy) return showToast("NEED START/END GAL + SQYDS");
  loads.push({
  id: Date.now(), load: loads.length + 1,
@@ -550,8 +551,9 @@ function saveLoad() {
  tons: parseFloat(tons.toFixed(2)),
  truck: $("pTruck").value, material: $("pMaterial").value,
  sprayTemp: $("pSpray").value, roadTemp: $("pRoad").value,
- ambientTemp, location: $("pLoc").value,
+ ambientTemp, location: $("envLocInput").value, jobNum: $("envJobInput").value,
  });
+ console.log('loads after push:', loads);
  localStorage.setItem("src_loads", JSON.stringify(loads));
  $("pStart").value = ""; $("pEnd").value = ""; $("pSqyds").value = "";
  updateLoadUI(); updateLogTab();
