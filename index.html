@@ -205,12 +205,12 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="sprayTemp" inputmode="decimal" placeholder="150-165">
  </div>
  <div class="field">
- <label>Road °F</label>
- <input id="roadTemp" inputmode="decimal" placeholder="Temp gun">
+ <label>Rate (gal/sy)</label>
+ <input id="calcRate" inputmode="decimal" placeholder="0.35">
  </div>
  <div class="field">
- <label>Notes</label>
- <input id="calcNotes" inputmode="text" placeholder="Optional">
+ <label>Nozzle</label>
+ <input id="calcNozzle" inputmode="decimal" placeholder="#3">
  </div>
  </div>
  <div class="btn-row">
@@ -325,12 +325,12 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="pSpray" inputmode="decimal" placeholder="150-165">
  </div>
  <div class="field">
- <label>Road °F</label>
- <input id="pRoad" inputmode="decimal" placeholder="Temp gun">
+ <label>Rate (gal/sy)</label>
+ <input id="pRate" inputmode="decimal" placeholder="0.35">
  </div>
  <div class="field">
- <label>Notes</label>
- <input id="pNotes" inputmode="text" placeholder="Optional">
+ <label>Nozzle</label>
+ <input id="pNozzle" inputmode="decimal" placeholder="#3">
  </div>
  </div>
  <div class="btn-row">
@@ -481,13 +481,15 @@ function syncJobInfo(dir) {
  $("pTruck").value = $("truck").value;
  $("pMaterial").value = $("material").value;
  $("pSpray").value = $("sprayTemp").value;
- $("pRoad").value = $("roadTemp").value;
+ $("pRate").value = $("calcRate").value;
+ $("pNozzle").value = $("calcNozzle").value;
  $("pLoc").value = $("locInput").value;
  } else {
  $("truck").value = $("pTruck").value;
  $("material").value = $("pMaterial").value;
  $("sprayTemp").value = $("pSpray").value;
- $("roadTemp").value = $("pRoad").value;
+ $("calcRate").value = $("pRate").value;
+ $("calcNozzle").value = $("pNozzle").value;
  $("locInput").value = $("pLoc").value;
  }
 }
@@ -617,7 +619,7 @@ function saveLoad() {
  netGal: net, sqyds: sy, avgRate: parseFloat(rate.toFixed(2)),
  tons: parseFloat(tons.toFixed(2)),
  truck: $("pTruck").value, material: $("pMaterial").value,
- sprayTemp: $("pSpray").value, roadTemp: $("pRoad").value,
+ sprayTemp: $("pSpray").value, targetRate: $("pRate").value, nozzle: $("pNozzle").value,
  ambientTemp, location: $("envLocInput").value, jobNum: $("envJobInput").value,
  });
  console.log('loads after push:', loads);
@@ -669,7 +671,7 @@ function renderLogs() {
  <div class="log-data">
  <span>${p.startGal}→${p.endGal}</span> gal · Net: <span>${p.netGal}</span><br>
  <span>${p.sqyds} sy</span> · Rate: <span>${p.avgRate} gal/sy</span> · <span>${p.tons} tons</span><br>
- ${p.material}${p.sprayTemp ? " · Spray: <span>"+p.sprayTemp+"°F</span>" : ""}${p.roadTemp ? " · Road: <span>"+p.roadTemp+"°F</span>" : ""}${p.ambientTemp ? " · Amb: <span>"+p.ambientTemp+"°F</span>" : ""}${p.truck ? " · Truck #"+p.truck : ""}
+ ${p.material}${p.sprayTemp ? " · Spray: <span>"+p.sprayTemp+"°F</span>" : ""}${p.nozzle ? " · Nozzle: <span>#"+p.nozzle+"</span>" : ""}${p.targetRate ? " · Target: <span>"+p.targetRate+" gal/sy</span>" : ""}${p.truck ? " · Truck #"+p.truck : ""}
  </div>
  <button class="log-del" onclick="deletePull(${p.id})">✕</button>
  </div>
@@ -694,9 +696,9 @@ function clearAllLoads() {
 
 function exportCSV() {
  if (!loads.length) return showToast("NO PULLS TO EXPORT");
- const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,RoadTemp,AmbientTemp,Location,JobNum\n";
+ const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,TargetRate,Nozzle,AmbientTemp,Location,JobNum\n";
  const rows = loads.map(p =>
- `${p.load},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp},${p.roadTemp},${p.ambientTemp||""},"${p.location}"`
+ `${p.load},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp||""},${p.targetRate||""},${p.nozzle||""},${p.ambientTemp||""},"${p.location}"`
  ).join("\n");
  const tg = loads.reduce((s,p)=>s+p.netGal,0), ts = loads.reduce((s,p)=>s+p.sqyds,0);
  const tt = loads.reduce((s,p)=>s+p.tons,0), ar = ts>0?tg/ts:0;
