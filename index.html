@@ -125,7 +125,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <div class="header">
  <h1>Shot Rate Calculator</h1>
  <div class="sub">by Ravinder Gill</div>
- <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.4</div>
+ <div style="font-size:10px;color:var(--text-dim);margin-top:4px;letter-spacing:1px">v1.5</div>
  </div>
 
  <div class="env-bar">
@@ -209,7 +209,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="calcRate" inputmode="decimal" placeholder="0.35">
  </div>
  <div class="field">
- <label>Nozzle</label>
+ <label>Tip</label>
  <input id="calcNozzle" inputmode="decimal" placeholder="#3">
  </div>
  </div>
@@ -233,14 +233,11 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  </div>
  <div class="grid">
   <div class="field">
-  <label>Nozzle Tip <span style="color:var(--red);font-size:11px">★ REQ</span></label>
+  <label>Tip Size <span style="color:var(--red);font-size:11px">★ REQ</span></label>
   <select id="prNozzle" onchange="calcPumpRate()">
    <option value="">— Select —</option>
-   <option value="0.5">#0.5</option>
    <option value="1">#1</option>
-   <option value="1.5">#1.5</option>
    <option value="2">#2</option>
-   <option value="2.5">#2.5</option>
    <option value="3">#3</option>
    <option value="4">#4</option>
    <option value="5">#5</option>
@@ -248,7 +245,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
   </select>
   </div>
   <div class="field">
-  <label>Nozzles / Foot</label>
+  <label>Tips / Foot</label>
   <select id="prConfig" onchange="calcPumpRate()">
    <option value="1">1 per foot</option>
    <option value="2">2 per foot</option>
@@ -275,9 +272,9 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
   <div class="ru">GPM</div>
   </div>
   <div class="result-item">
-  <div class="rl">Total Nozzles</div>
+  <div class="rl">Total Tips</div>
   <div class="rv cy" id="prNozzleCount">—</div>
-  <div class="ru">nozzles</div>
+  <div class="ru">tips</div>
   </div>
  </div>
  <div id="prWarning" style="display:none;background:#2e1a1a;border:1px solid var(--red);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#ff8080;text-align:center"></div>
@@ -329,7 +326,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  <input id="pRate" inputmode="decimal" placeholder="0.35">
  </div>
  <div class="field">
- <label>Nozzle</label>
+ <label>Tip</label>
  <input id="pNozzle" inputmode="decimal" placeholder="#3">
  </div>
  </div>
@@ -671,7 +668,7 @@ function renderLogs() {
  <div class="log-data">
  <span>${p.startGal}→${p.endGal}</span> gal · Net: <span>${p.netGal}</span><br>
  <span>${p.sqyds} sy</span> · Rate: <span>${p.avgRate} gal/sy</span> · <span>${p.tons} tons</span><br>
- ${p.material}${p.sprayTemp ? " · Spray: <span>"+p.sprayTemp+"°F</span>" : ""}${p.nozzle ? " · Nozzle: <span>#"+p.nozzle+"</span>" : ""}${p.targetRate ? " · Target: <span>"+p.targetRate+" gal/sy</span>" : ""}${p.truck ? " · Truck #"+p.truck : ""}
+ ${p.material}${p.sprayTemp ? " · Spray: <span>"+p.sprayTemp+"°F</span>" : ""}${p.nozzle ? " · Tip: <span>#"+p.nozzle+"</span>" : ""}${p.targetRate ? " · Target: <span>"+p.targetRate+" gal/sy</span>" : ""}${p.truck ? " · Truck #"+p.truck : ""}
  </div>
  <button class="log-del" onclick="deletePull(${p.id})">✕</button>
  </div>
@@ -696,7 +693,7 @@ function clearAllLoads() {
 
 function exportCSV() {
  if (!loads.length) return showToast("NO PULLS TO EXPORT");
- const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,TargetRate,Nozzle,AmbientTemp,Location,JobNum\n";
+ const h = "Load,Date,Time,StartGal,EndGal,NetGal,SqYds,AvgRate,Tons,Truck,Material,SprayTemp,TargetRate,Tip,AmbientTemp,Location,JobNum\n";
  const rows = loads.map(p =>
  `${p.load},${p.date},${p.time},${p.startGal},${p.endGal},${p.netGal},${p.sqyds},${p.avgRate},${p.tons},${p.truck},${p.material},${p.sprayTemp||""},${p.targetRate||""},${p.nozzle||""},${p.ambientTemp||""},"${p.location}"`
  ).join("\n");
@@ -864,17 +861,17 @@ function calcPumpRate() {
    const spdFPM = prUnitFPM ? spd : spd * 88;
    if (spdFPM < minSpd) {
     warn.style.display = 'block';
-    warn.textContent = `⚠ Speed too slow — nozzles may over-apply. Target ${Math.round(minSpd)}+ FPM.`;
+    warn.textContent = `⚠ Speed too slow — tips may over-apply. Target ${Math.round(minSpd)}+ FPM.`;
    } else if (spdFPM > maxSpd) {
     warn.style.display = 'block';
-    warn.textContent = `⚠ Speed too fast — nozzles may under-apply. Target under ${Math.round(maxSpd)} FPM.`;
+    warn.textContent = `⚠ Speed too fast — tips may under-apply. Target under ${Math.round(maxSpd)} FPM.`;
    }
   }
  } else {
   spdRng.style.display = 'none';
   if (!nozzle) {
    warn.style.display = 'block';
-   warn.textContent = 'Select a nozzle tip to see recommended speed.';
+   warn.textContent = 'Select a tip size to see recommended speed.';
   }
  }
 
