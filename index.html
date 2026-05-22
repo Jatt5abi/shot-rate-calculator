@@ -826,9 +826,9 @@ function calcPumpRate() {
  // Recommended speed range (bar cancels out — only needs nozzle, cfg, rate)
  if (!isNaN(nozzle) && nozzle > 0 && !isNaN(rate) && rate > 0) {
   const totalNozzles = !isNaN(bar) && bar > 0 ? Math.round(bar * cfg) : null;
-  // bar cancels: minSpd = (nozzle × cfg × 9) / rate
-  const minSpd = (nozzle * 1.0 * cfg * 9) / rate;
-  const maxSpd = (nozzle * 1.5 * cfg * 9) / rate;
+  // BearCat formula: min_flow = (n+2)/3 GPM, max_flow = (2n+1)/2 GPM per nozzle
+  const minSpd = ((nozzle + 2) / 3 * cfg * 9) / rate;
+  const maxSpd = ((2 * nozzle + 1) / 2 * cfg * 9) / rate;
   const unit = prUnitFPM ? 'FPM' : 'MPH';
   const minDisp = prUnitFPM ? minSpd : minSpd / 88;
   const maxDisp = prUnitFPM ? maxSpd : maxSpd / 88;
