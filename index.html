@@ -801,6 +801,28 @@ window.addEventListener('appinstalled', () => {
 // ─── PUMP RATE CALCULATOR ───
 let prUnitFPM = true;
 
+// Verified against BearCat Mfg app v1.3 — GPM per nozzle at operating range
+const NOZZLE_FLOW = {
+  0.5: { min: 0.75, max: 0.875 },
+  1:   { min: 1.0,  max: 1.5   },
+  1.5: { min: 1.167,max: 2.0   },
+  2:   { min: 1.333,max: 2.5   },
+  2.5: { min: 1.667,max: 2.75  },
+  3:   { min: 2.0,  max: 3.0   },
+  4:   { min: 2.667,max: 3.5   }
+};
+
+function nozzleFlowRange(n) {
+  if (NOZZLE_FLOW[n]) return NOZZLE_FLOW[n];
+  const keys = Object.keys(NOZZLE_FLOW).map(Number).sort((a,b)=>a-b);
+  const lo = keys.filter(k=>k<=n).pop(), hi = keys.find(k=>k>=n);
+  if (!lo) return NOZZLE_FLOW[hi];
+  if (!hi) return NOZZLE_FLOW[lo];
+  const t = (n-lo)/(hi-lo);
+  return { min: NOZZLE_FLOW[lo].min + t*(NOZZLE_FLOW[hi].min-NOZZLE_FLOW[lo].min),
+           max: NOZZLE_FLOW[lo].max + t*(NOZZLE_FLOW[hi].max-NOZZLE_FLOW[lo].max) };
+}
+
 function togglePrUnit() {
  prUnitFPM = !prUnitFPM;
  $('prUnitBtn').textContent = prUnitFPM ? 'FPM' : 'MPH';
@@ -826,9 +848,9 @@ function calcPumpRate() {
  // Recommended speed range (bar cancels out — only needs nozzle, cfg, rate)
  if (!isNaN(nozzle) && nozzle > 0 && !isNaN(rate) && rate > 0) {
   const totalNozzles = !isNaN(bar) && bar > 0 ? Math.round(bar * cfg) : null;
-  // BearCat formula: min_flow = (n+2)/3 GPM, max_flow = (2n+1)/2 GPM per nozzle
-  const minSpd = ((nozzle + 2) / 3 * cfg * 9) / rate;
-  const maxSpd = ((2 * nozzle + 1) / 2 * cfg * 9) / rate;
+  const { min: minFlow, max: maxFlow } = nozzleFlowRange(nozzle);
+  const minSpd = (minFlow * cfg * 9) / rate;
+  const maxSpd = (maxFlow * cfg * 9) / rate;
   const unit = prUnitFPM ? 'FPM' : 'MPH';
   const minDisp = prUnitFPM ? minSpd : minSpd / 88;
   const maxDisp = prUnitFPM ? maxSpd : maxSpd / 88;
