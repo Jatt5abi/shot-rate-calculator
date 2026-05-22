@@ -243,6 +243,8 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
    <option value="2.5">#2.5</option>
    <option value="3">#3</option>
    <option value="4">#4</option>
+   <option value="5">#5</option>
+   <option value="6">#6</option>
   </select>
   </div>
   <div class="field">
@@ -802,14 +804,12 @@ window.addEventListener('appinstalled', () => {
 let prUnitFPM = true;
 
 // Verified against BearCat Mfg app v1.3 — GPM per nozzle at operating range
+// #1,#2,#3,#6 exact; others interpolated by nozzleFlowRange()
 const NOZZLE_FLOW = {
-  0.5: { min: 0.75, max: 0.875 },
-  1:   { min: 1.0,  max: 1.5   },
-  1.5: { min: 1.167,max: 2.0   },
-  2:   { min: 1.333,max: 2.5   },
-  2.5: { min: 1.667,max: 2.75  },
-  3:   { min: 2.0,  max: 3.0   },
-  4:   { min: 2.667,max: 3.5   }
+  1: { min: 1.0,   max: 1.5 },
+  2: { min: 1.333, max: 2.5 },
+  3: { min: 2.0,   max: 3.0 },
+  6: { min: 5.0,   max: 8.0 }
 };
 
 function nozzleFlowRange(n) {
