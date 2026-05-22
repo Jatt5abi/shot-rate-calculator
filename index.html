@@ -146,6 +146,7 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
 
  <div class="tabs">
  <button class="tab active" id="tabCalc" onclick="switchTab('calc')">Calculator</button>
+ <button class="tab" id="tabPump" onclick="switchTab('pump')">Pump Rate</button>
  <button class="tab" id="tabLoad" onclick="switchTab('load')">Load Tracker</button>
  <button class="tab" id="tabLogs" onclick="switchTab('logs')">Logs</button>
  <button class="tab" id="tabAbout" onclick="switchTab('about')">About</button>
@@ -214,6 +215,67 @@ body{height:100%;overflow:hidden;font-family:'Barlow Condensed',sans-serif;backg
  </div>
  <div class="btn-row">
  <button class="btn btn-reset" onclick="resetCalc()">Reset</button>
+ </div>
+ </div>
+
+ <!-- ═══ PUMP RATE ═══ -->
+ <div class="body hidden" id="viewPump">
+ <div class="section-label">Pump Rate Calculator</div>
+ <div class="grid">
+  <div class="field">
+  <label>Bar Length (ft)</label>
+  <input id="prBar" inputmode="decimal" placeholder="16" oninput="calcPumpRate()">
+  </div>
+  <div class="field">
+  <label>App Rate (gal/sy)</label>
+  <input id="prRate" inputmode="decimal" placeholder="0.07" oninput="calcPumpRate()">
+  </div>
+ </div>
+ <div class="field" style="margin-bottom:12px">
+  <label>Distributor Speed</label>
+  <div style="display:flex;gap:8px;align-items:center">
+  <input id="prSpeed" inputmode="decimal" placeholder="350" style="flex:1;background:var(--input-bg);border:2px solid var(--border);border-radius:8px;padding:10px 12px;font-size:20px;font-family:'Oswald',sans-serif;font-weight:500;color:var(--text);outline:none;width:100%;-webkit-appearance:none" oninput="calcPumpRate()">
+  <button id="prUnitBtn" onclick="togglePrUnit()" style="padding:10px 14px;border:2px solid var(--cyan);border-radius:8px;background:transparent;color:var(--cyan);font-family:'Oswald',sans-serif;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent">FPM</button>
+  </div>
+ </div>
+ <div class="grid">
+  <div class="field">
+  <label>Nozzle Tip <span style="color:var(--red);font-size:11px">★ REQ</span></label>
+  <select id="prNozzle" onchange="calcPumpRate()">
+   <option value="">— Select —</option>
+   <option value="0.5">#0.5</option>
+   <option value="1">#1</option>
+   <option value="1.5">#1.5</option>
+   <option value="2">#2</option>
+   <option value="2.5">#2.5</option>
+   <option value="3">#3</option>
+   <option value="4">#4</option>
+  </select>
+  </div>
+  <div class="field">
+  <label>Nozzles / Foot</label>
+  <select id="prConfig" onchange="calcPumpRate()">
+   <option value="1">1 per foot</option>
+   <option value="2">2 per foot</option>
+   <option value="3" selected>3 per foot</option>
+  </select>
+  </div>
+ </div>
+ <div class="result-card" id="prResult" style="display:none">
+  <div class="result-item">
+  <div class="rl">Pump Rate</div>
+  <div class="rv" id="prGPM">—</div>
+  <div class="ru">GPM</div>
+  </div>
+  <div class="result-item">
+  <div class="rl">Total Nozzles</div>
+  <div class="rv cy" id="prNozzleCount">—</div>
+  <div class="ru">nozzles</div>
+  </div>
+ </div>
+ <div id="prWarning" style="display:none;background:#2e1a1a;border:1px solid var(--red);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#ff8080;text-align:center"></div>
+ <div class="btn-row">
+  <button class="btn btn-reset" onclick="resetPumpRate()">Reset</button>
  </div>
  </div>
 
@@ -388,20 +450,18 @@ document.querySelectorAll("input:not([disabled])").forEach(inp => {
 
 // ─── TABS ───
 function switchTab(t) {
- // Hide all views, show the one that matches
  $('viewCalc').classList.toggle('hidden', t !== 'calc');
+ $('viewPump').classList.toggle('hidden', t !== 'pump');
  $('viewPull').classList.toggle('hidden', t !== 'load');
  $('viewLogs').classList.toggle('hidden', t !== 'logs');
  $('viewAbout').classList.toggle('hidden', t !== 'about');
- // Update tab highlights
  $('tabCalc').classList.toggle('active', t === 'calc');
+ $('tabPump').classList.toggle('active', t === 'pump');
  $('tabLoad').classList.toggle('active', t === 'load');
  $('tabLogs').classList.toggle('active', t === 'logs');
  $('tabAbout').classList.toggle('active', t === 'about');
- // Show footer only on load/logs
  const footer = $("footer");
  footer.classList.toggle("show", t === "load" || t === "logs");
- // Handle tab-specific init
  if (t === "logs") renderLogs();
  if (t === "load") { syncJobInfo("to-load"); updateLoadUI(); }
  if (t === "calc") syncJobInfo("to-calc");
@@ -732,6 +792,63 @@ function installApp() {
 window.addEventListener('appinstalled', () => {
  $("installPrompt").classList.add("hidden");
 });
+
+// ─── PUMP RATE CALCULATOR ───
+let prUnitFPM = true;
+
+function togglePrUnit() {
+ prUnitFPM = !prUnitFPM;
+ $('prUnitBtn').textContent = prUnitFPM ? 'FPM' : 'MPH';
+ $('prUnitBtn').style.color = prUnitFPM ? 'var(--cyan)' : 'var(--yellow)';
+ $('prUnitBtn').style.borderColor = prUnitFPM ? 'var(--cyan)' : 'var(--yellow)';
+ $('prSpeed').placeholder = prUnitFPM ? '350' : '4';
+ calcPumpRate();
+}
+
+function calcPumpRate() {
+ const bar  = parseFloat($('prBar').value);
+ const rate = parseFloat($('prRate').value);
+ const spd  = parseFloat($('prSpeed').value);
+ const nozzle = $('prNozzle').value;
+ const cfg  = parseInt($('prConfig').value) || 3;
+
+ const warn = $('prWarning');
+ const res  = $('prResult');
+
+ if (!nozzle) {
+  warn.style.display = 'block';
+  warn.textContent = 'Select a nozzle tip to calculate.';
+  res.style.display = 'none';
+  return;
+ }
+ warn.style.display = 'none';
+
+ if (isNaN(bar) || isNaN(rate) || isNaN(spd) || bar <= 0 || rate <= 0 || spd <= 0) {
+  res.style.display = 'none';
+  return;
+ }
+
+ const spdFPM = prUnitFPM ? spd : spd * 88; // MPH → FPM
+ const gpm = (rate * bar * spdFPM) / 9;
+ const totalNozzles = Math.round(bar * cfg);
+
+ $('prGPM').textContent = gpm.toFixed(1);
+ $('prNozzleCount').textContent = totalNozzles;
+ res.style.display = 'grid';
+}
+
+function resetPumpRate() {
+ ['prBar','prSpeed','prRate'].forEach(id => $( id).value = '');
+ $('prNozzle').value = '';
+ $('prConfig').value = '3';
+ $('prResult').style.display = 'none';
+ $('prWarning').style.display = 'none';
+ prUnitFPM = true;
+ $('prUnitBtn').textContent = 'FPM';
+ $('prUnitBtn').style.color = 'var(--cyan)';
+ $('prUnitBtn').style.borderColor = 'var(--cyan)';
+ $('prSpeed').placeholder = '350';
+}
 </script>
 </body>
 </html>
