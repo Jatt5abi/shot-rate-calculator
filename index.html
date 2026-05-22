@@ -823,12 +823,12 @@ function calcPumpRate() {
 
  warn.style.display = 'none';
 
- // Recommended speed range (needs bar, rate, nozzle, config)
- if (!isNaN(nozzle) && nozzle > 0 && !isNaN(bar) && bar > 0 && !isNaN(rate) && rate > 0) {
-  const totalNozzles = Math.round(bar * cfg);
-  // min speed: nozzle at 1× rated GPM; max speed: nozzle at 1.5× rated GPM
-  const minSpd = (nozzle * 1.0 * totalNozzles * 9) / (rate * bar);
-  const maxSpd = (nozzle * 1.5 * totalNozzles * 9) / (rate * bar);
+ // Recommended speed range (bar cancels out — only needs nozzle, cfg, rate)
+ if (!isNaN(nozzle) && nozzle > 0 && !isNaN(rate) && rate > 0) {
+  const totalNozzles = !isNaN(bar) && bar > 0 ? Math.round(bar * cfg) : null;
+  // bar cancels: minSpd = (nozzle × cfg × 9) / rate
+  const minSpd = (nozzle * 1.0 * cfg * 9) / rate;
+  const maxSpd = (nozzle * 1.5 * cfg * 9) / rate;
   const unit = prUnitFPM ? 'FPM' : 'MPH';
   const minDisp = prUnitFPM ? minSpd : minSpd / 88;
   const maxDisp = prUnitFPM ? maxSpd : maxSpd / 88;
